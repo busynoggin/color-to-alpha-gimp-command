@@ -91,19 +91,19 @@ def color_to_alpha(pixels, color, transparency_threshold, opacity_threshold, sha
 
 
 
-def color_to_alpha_command(input_filename, output_filename):
+def color_to_alpha_command(input_filename, output_filename, shape='sphere', interpolation='linear', transparency_threshold=18, opacity_threshold=193):
     img = Image.open(input_filename)
     first_pixel = tuple(img.getpixel((1, 1)))
     # User settings
     #shape = st.sidebar.selectbox('Shape (used for calculating distance in RGB-space)', ['sphere', 'cube'])
-    shape = 'sphere'
+    #shape = 'sphere'
     #interpolation = st.sidebar.selectbox('Interpolation', ['linear', 'power', 'root', 'smooth', 'inverse-sin'])
-    interpolation = 'linear'
-    top_threshold_bound = 255 if shape == 'cube' else 442
+    #interpolation = 'linear'
+    #top_threshold_bound = 255 if shape == 'cube' else 442
     #transparency_threshold = st.sidebar.slider('Transparency Threshold', 0, top_threshold_bound, 18)
-    transparency_threshold = 18
+    #transparency_threshold = 18
     #opacity_threshold = st.sidebar.slider('Opacity Threshold', 0, top_threshold_bound, 193)
-    opacity_threshold = 193
+    #opacity_threshold = 193
 
     cta_arr = color_to_alpha(np.array(img), first_pixel, transparency_threshold, opacity_threshold, shape=shape, interpolation=interpolation)
     cta_img = Image.fromarray(cta_arr, 'RGBA')
