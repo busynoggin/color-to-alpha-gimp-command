@@ -7,7 +7,6 @@ Maverick Reynolds
 '''
 
 from PIL import Image
-from io import BytesIO
 import numpy as np
 import sys
 
@@ -73,8 +72,7 @@ def color_to_alpha(pixels, color, transparency_threshold, opacity_threshold, sha
     alpha = np.clip(alpha, 0, 1)
 
     # Interpolate based on method provided
-    alpha = interpolate(alpha, interpolation=interpolation)
-
+    alpha = interpolate(alpha, interpolation)
     # Extrapolate along line passing through color and pixel onto the opacity threshold
     # This is the RGB value that will be used for the pixel
     proportion_to_opacity = distances / opacity_threshold
@@ -91,45 +89,11 @@ def color_to_alpha(pixels, color, transparency_threshold, opacity_threshold, sha
     return new_pixels
 
 
-# For downloading the new image
-def convert_image(img):
-    buf = BytesIO()
-    img.save(buf, format='PNG')
-    byte_im = buf.getvalue()
-    return byte_im
-
-
-# Color conversion functions
-def tuple_to_hex(tup):
-    return f'#{tup[0]:02x}{tup[1]:02x}{tup[2]:02x}'.upper()
-
-def hex_to_tuple(hex: str):
-    hex = hex.lstrip('#')
-    return tuple(int(hex[i:i+2], 16) for i in (0, 2, 4))
-
-
-# To get the top colors in the image
-def get_pixel_distribution(img):
-    width, height = img.size
-    counter = dict()
-
-    # Count the number of pixels of each color
-    for h in range(height):
-        for w in range(width):
-            pix = img.getpixel((w, h))
-            if pix not in counter:
-                counter[pix] = 1
-            else:
-                counter[pix] += 1
-
-    # Sort the dictionary by value, highest to lowest
-    counter = sorted(counter.items(), key=lambda x: x[1], reverse=True)
-    return counter
-
 
 
 def color_to_alpha_command(input_filename, output_filename):
     img = Image.open(input_filename)
+    first_pixel = tuple(img.getpixel((1, 1)))
     # User settings
     #shape = st.sidebar.selectbox('Shape (used for calculating distance in RGB-space)', ['sphere', 'cube'])
     shape = 'sphere'
@@ -140,47 +104,12 @@ def color_to_alpha_command(input_filename, output_filename):
     transparency_threshold = 18
     #opacity_threshold = st.sidebar.slider('Opacity Threshold', 0, top_threshold_bound, 193)
     opacity_threshold = 193
-    # Background replacement option
-    #if (use_background := st.sidebar.checkbox('Background Replacement')):
-    #    background_color = st.sidebar.color_picker('Background Color', '#10EAEC')
-    #    bg = Image.new('RGBA', img.size, background_color)
-    # Color selection
-    #st.sidebar.title('Color Selection')
-    #color = '#FFFFFF'
-    # Show the top colors in the image
-    #if st.sidebar.checkbox('Use top color in image'):
-    top_colors = get_pixel_distribution(img)[0][0]
-    color = tuple_to_hex(top_colors)
-    #color = st.sidebar.color_picker('Color', color)
-#     if st.sidebar.button('Get top colors from image'):
-#         NUM = 8
-#         top_colors = get_pixel_distribution(img)[0:NUM]
-#         colsb1, colsb2 = st.sidebar.columns(2)
-#         colsb2.write('\n')
-#
-#         for i in range(0, NUM):
-#             colsb1.color_picker(tuple_to_hex(top_colors[i][0]), tuple_to_hex(top_colors[i][0]))
-#             colsb2.write(top_colors[i][1])
-#             colsb2.write('\n')
-#             colsb2.write('\n')
-    # Main content on the page
-#     col1, col2 = st.columns(2)
-#
-#     col1.subheader("Original Image 🖼️")
-#     col1.image(img)
-#
-#     col2.subheader("Color to Alpha applied :wrench:")
-    cta_arr = color_to_alpha(np.array(img), hex_to_tuple(color), transparency_threshold, opacity_threshold, shape=shape, interpolation=interpolation)
+
+    cta_arr = color_to_alpha(np.array(img), first_pixel, transparency_threshold, opacity_threshold, shape=shape, interpolation=interpolation)
     cta_img = Image.fromarray(cta_arr, 'RGBA')
-#     if use_background:
-#         cta_img = Image.alpha_composite(bg, cta_img)
+
     cta_img.save(output_filename, dpi=img.info.get('dpi'), exif=img.info.get('exif'))
-#     col2.image(cta_img)
-#
-#     # Add download button
-#     col2.download_button('Download Image', convert_image(cta_img), file_name='color_to_alpha.png', mime='image/png')
-#
-# if __name__ == '__main__':
-#     main()
+
+
 
 color_to_alpha_command(sys.argv[1], sys.argv[2])
